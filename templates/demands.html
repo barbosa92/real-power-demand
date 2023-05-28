@@ -1,0 +1,10 @@
+{% extends 'layout.html' %}
+{% block head %}{% endblock %}
+{% block body %}
+    <section class="container">
+        <h3>Frequency domain</h3>
+        <img src={{freq_plot}} alt="frequency domain">
+        <h3>Time domain</h3>
+        <img src={{time_plot}} alt="time domain">
+    </section>
+{% endblock %}
