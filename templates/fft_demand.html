@@ -1,0 +1,14 @@
+{% extends 'layout.html' %}
+{% block head %}
+    <link rel="stylesheet" href="../static/css/fft_demand.css">
+{% endblock %}
+{% block body %}
+    <div class="signals">
+        <section class="graphs">
+            <img src={{freq_plot}} alt="frequency domain">
+            <img src={{time_plot}} alt="time domain">           
+        </section>
+        <a href="/demand/fft/json/{{id}}">Fast Fourier Transform results in JSON</a>
+    </div>
+    
+{% endblock %}

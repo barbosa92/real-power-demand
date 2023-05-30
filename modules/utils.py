@@ -1,78 +1,87 @@
 import requests
 import numpy as np
-from scipy.fft import fft, ifft, fftfreq
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+from datetime import datetime
+from urllib.parse import quote
+import json
+import os
+
+api_key = os.getenv('API_KEY')
 
 
-def demand_request():
+class DemandRequest:
+    def __init__(self, start_date, end_date):
+        self.start_date = start_date
+        self.end_date = end_date
 
-    url = "https://api.esios.ree.es/indicators/1293?start_date=2018-09-02T00%3A00%3A00Z&end_date=2018-10-06T23%3A50%3A00Z&geo_ids[]=8741"
+    def make_request(self):
+        url = f"https://api.esios.ree.es/indicators/1293?start_date={self.start_date}T00%3A00%3A00Z&end_date={self.end_date}T23%3A50%3A00Z&geo_ids[]=8741"
+        headers = {
+            'x-api-key': api_key,
+            'Cookie': 'incap_ses_267_1885724=oZbDAuWrlHwM8qqzL5O0A8XfcGQAAAAAEdi5ZX7RIaLSklaqpbL4zg==; nlbi_1885724=jnBrON6IpV3Q3qeUlFRiyAAAAABLfW+66IEH3e1Rw/O/w4TP; visid_incap_1885724=Rw73m3OjRPGdpM+zRAfco6XkbGQAAAAAQUIPAAAAAAC74qJiUYc/nFyR3I/+SDKr'
+        }
+        response = requests.get(url, headers=headers)
+        return response.json()
 
-    payload = {}
-    headers = {
-        'x-api-key': '52eee0ecb656ca45bbdcff23167a537ca49e5dede1dcf5b05866c13db29e0a81',
-        'Cookie': 'incap_ses_267_1885724=oZbDAuWrlHwM8qqzL5O0A8XfcGQAAAAAEdi5ZX7RIaLSklaqpbL4zg==; nlbi_1885724=jnBrON6IpV3Q3qeUlFRiyAAAAABLfW+66IEH3e1Rw/O/w4TP; visid_incap_1885724=Rw73m3OjRPGdpM+zRAfco6XkbGQAAAAAQUIPAAAAAAC74qJiUYc/nFyR3I/+SDKr'
-    }
 
-    response = requests.request("GET", url, headers=headers, data=payload)
+class FFTCalculator:
+    def __init__(self, signal):
+        self.signal = signal
 
-    res = response.json()
+    def fft(self):
+        """Calculate the FFT of a list of numbers."""
+        return np.fft.fft(self.signal)
 
-    # Extract values from 'values' key
-    signal = [item['value'] for item in res['indicator']['values']]
+    def format_fft_to_json(self, fft_result):
+        """Format the result of the FFT to JSON."""
+        return json.dumps({
+            "real": fft_result.real.tolist(),
+            "imag": fft_result.imag.tolist(),
+        })
 
-    # Step 2: Prepare the signal data
-    # signal = [...]  # Replace [...] with your actual signal data
 
-    # Step 3: Set the parameters
-    N = len(signal)
-    T = 10 * 60  # Set the sampling interval based on the time resolution of the signal
+class FFTPlot:
+    def __init__(self, signal, fft_result):
+        self.signal = signal
+        self.fft_result = fft_result
 
-    # Step 3: Set the time values
+    def plot_frequency_domain(self, fft_result):
+        N = len(self.signal)
+        T = 10 * 60
+        frequencies = np.fft.fftfreq(N, T)
+        fig, ax = plt.subplots()
+        ax.plot(frequencies, np.abs(fft_result))
+        plt.xlabel('Frequency (Hz)')
+        plt.ylabel('Amplitude')
+        plt.title('Signal in the Frequency Domain')
+        xmin = -1e-4  # xmin as -1 * 10^(-4)
+        xmax = 1e-4   # xmax as 1 * 10^(-4)
+        num_ticks = 5
+        xticks = np.linspace(xmin, xmax, num_ticks)
+        ax.set_xlim(xmin, xmax)
+        ax.set_xticks(xticks)
+        ax.set_xticklabels(['{:.1e}'.format(xtick) for xtick in xticks])
+        return fig
 
-    resolution_interval = 1 / T
+    def plot_time_domain(self):
+        time = np.arange(len(self.signal)) * (10 * 60)
+        fig, ax = plt.subplots()
+        ax.plot(time, self.signal)
+        plt.xlabel('Time')
+        plt.ylabel('Amplitude')
+        plt.title('Signal in the Time Domain')
+        return fig
 
-    time = np.arange(len(signal)) * resolution_interval
+    def save_plot(self, fig, plot_filename):
+        canvas = FigureCanvasAgg(fig)
+        canvas.print_png(plot_filename)
 
-    # Step 4: Perform the FFT
-    fft_result = fft(signal)
-    frequencies = fftfreq(N, T)
 
-    # Step 5: Plot the frequency spectrum
-    # plt.plot(frequencies, np.abs(fft_result))
-    # plt.xlabel('Frequency (Hz)')
-    # plt.ylabel('Amplitude')
-    # plt.show()
-    # freq_plot = 'static/images/freq_plot.png'
-    # plt.savefig(freq_plot)
-
-    fig1, ax1 = plt.subplots()
-    ax1.plot(frequencies, np.abs(fft_result))
-    plt.xlabel('Frequency (Hz)')
-    plt.ylabel('Amplitude')
-
-    # Save the first plot with a unique filename
-    plot_filename1 = f'static/images/fig1.png'
-    canvas1 = FigureCanvasAgg(fig1)
-    canvas1.print_png(plot_filename1)
-
-    # Step 4: Plot the signal in the time domain
-    # plt.plot(time, signal)
-    # plt.xlabel('Time')
-    # plt.ylabel('Amplitude')
-    # plt.title('Signal in the Time Domain')
-    # # plt.show()
-    # time_plot = 'static/images/time_plot.png'
-    # plt.savefig(time_plot)
-
-    fig2, ax2 = plt.subplots()
-    ax2.plot(time, signal)
-    plt.xlabel('Time')
-    plt.ylabel('Amplitude')
-    plt.title('Signal in the Time Domain')
-
-    # Save the first plot with a unique filename
-    plot_filename2 = f'static/images/fig2.png'
-    canvas2 = FigureCanvasAgg(fig2)
-    canvas2.print_png(plot_filename2)
+def convert_to_utc(date):
+    original_format = '%Y-%m-%d'
+    target_format = '%Y-%m-%d'
+    date_obj = datetime.strptime(date, original_format)
+    target_date_string = date_obj.strftime(target_format)
+    encoded_date_string = quote(target_date_string)
+    return encoded_date_string

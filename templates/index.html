@@ -1,5 +1,10 @@
 {% extends 'layout.html' %}
-{% block head %}{% endblock %}
+{% block head %}
+    <link rel="stylesheet" href="../static/css/index.css">
+{% endblock %}
 {% block body %}
-    <h1>Hello</h1>
+    <div class="home">
+        <h1>Real Electricity Demand Signal Converter</h1>
+        <a href="/demand", method="GET">Real electricity demand</a>
+    </div>
 {% endblock %}
