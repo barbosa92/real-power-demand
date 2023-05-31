@@ -1,8 +1,17 @@
 from flask import Blueprint, render_template, request
-from modules.models import db, Demand
+from flask_cors import cross_origin
 from modules.utils import DemandRequest, FFTCalculator, FFTPlot, convert_to_utc
 import json
-from datetime import datetime
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+import os
+
+cloudinary.config(
+    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.getenv('CLOUDINARY_API_KEY'),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET')
+)
 
 api = Blueprint("api", __name__)
 
@@ -17,17 +26,15 @@ def demand():
     return render_template("demand.html")
 
 
-@api.route("/demand/fft", methods=["POST"])
-def fft_demand():
-    if request.method == "POST":
-        start_date = request.form.get("start_date")
+@api.route("/demand/fft/<start_date>/<end_date>", methods=["GET", "POST"])
+@cross_origin()
+def fft_demand(start_date, end_date):
+    if request.method == "GET":
         start_date = convert_to_utc(start_date)
-        end_date = request.form.get("end_date")
         end_date = convert_to_utc(end_date)
 
         request_handler = DemandRequest(start_date, end_date)
         response = request_handler.make_request()
-        print(response)
         signal = [item['value'] for item in response['indicator']['values']]
 
         fft_calculator = FFTCalculator(signal)
@@ -43,33 +50,37 @@ def fft_demand():
         fft_plot.save_plot(freq_fig, freq_plot_filename)
         fft_plot.save_plot(time_fig, time_plot_filename)
 
-        fft_string = json.dumps(json_fft)
-        print(fft_string)
+        freq_result = cloudinary.uploader.upload(freq_plot_filename)
+        time_result = cloudinary.uploader.upload(time_plot_filename)
 
-        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        # Get the public URLs of the uploaded images
+        freq_fig_url = freq_result['secure_url']
+        time_fig_url = time_result['secure_url']
 
-        demand_data = Demand(start_date=start_date,
-                             end_date=end_date, fft_string=fft_string)
+        # Return the URLs as a dictionary
+        figures = {
+            'freq_fig': freq_fig_url,
+            'time_fig': time_fig_url
+        }
 
-        try:
-            db.session.add(demand_data)
-            db.session.commit()
-        except Exception as e:
-            print(f"There was a problem adding the real demand data: {str(e)}")
-            return "Error: Failed to add demand data."
+        # Convert the figures to JSON response
+        response = json.dumps(figures)
 
-        freq_plot = '../static/images/fig1.png'
-        time_plot = '../static/images/fig2.png'
-        return render_template("fft_demand.html", freq_plot=freq_plot, time_plot=time_plot, id=demand_data.id)
+        return (response)
+
     else:
         return render_template("404.html"), 404
 
 
-@api.route("/demand/fft/json/<int:id>", methods=["GET"])
-def fft_demand_json(id):
-    demands = Demand.query.get(id)
-    if demands:
-        return json.loads(demands.fft_string)
-    else:
-        return "Error: Demand not found.", 404
+@api.route("/demand/fft/<start_date>/<end_date>/json", methods=["GET"])
+def fft_demand_json(start_date, end_date):
+    start_date = convert_to_utc(start_date)
+    end_date = convert_to_utc(end_date)
+    request_handler = DemandRequest(start_date, end_date)
+    response = request_handler.make_request()
+    signal = [item['value'] for item in response['indicator']['values']]
+
+    fft_calculator = FFTCalculator(signal)
+    fft_result = fft_calculator.fft()
+    json_fft = fft_calculator.format_fft_to_json(fft_result)
+    return json_fft

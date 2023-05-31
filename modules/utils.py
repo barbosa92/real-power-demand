@@ -54,8 +54,8 @@ class FFTPlot:
         plt.xlabel('Frequency (Hz)')
         plt.ylabel('Amplitude')
         plt.title('Signal in the Frequency Domain')
-        xmin = -1e-4  # xmin as -1 * 10^(-4)
-        xmax = 1e-4   # xmax as 1 * 10^(-4)
+        xmin = -1e-4
+        xmax = 1e-4
         num_ticks = 5
         xticks = np.linspace(xmin, xmax, num_ticks)
         ax.set_xlim(xmin, xmax)
