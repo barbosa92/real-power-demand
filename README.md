@@ -6,8 +6,8 @@
 - **Description:** This route calculates the Fast Fourier Transform (FFT) of the demand signal within the specified date range and generates frequency and time domain plots.
 
 ### Request Parameters
-- **start_date** (string): The start date of the demand signal in the format "YYYY-MM-DD".
-- **end_date** (string): The end date of the demand signal in the format "YYYY-MM-DD".
+- **<start_date>** (string): The start date of the demand signal in the format "YYYY-MM-DD".
+- **<end_date>** (string): The end date of the demand signal in the format "YYYY-MM-DD".
 
 ### GET Request
 - **Method:** GET
@@ -15,7 +15,7 @@
 
 Example request
 ```
-GET /demand/fft/2022-01-01/2022-01-31
+GET /demand/fft/2018-09-02/2018-10-06
 ```
 
 Response
@@ -35,8 +35,8 @@ Example response:
 - **Description:** This route calculates the Fast Fourier Transform (FFT) of the real demand signal within the specified date range and returns the result in JSON format.
 
 ### Request Parameters
-- **start_date** (string): The start date of the demand signal in the format "YYYY-MM-DD".
-- **end_date** (string): The end date of the demand signal in the format "YYYY-MM-DD".
+- **<start_date>** (string): The start date of the demand signal in the format "YYYY-MM-DD".
+- **<end_date>** (string): The end date of the demand signal in the format "YYYY-MM-DD".
 
 ### GET Request
 - **Method:** GET
