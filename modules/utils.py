@@ -7,8 +7,6 @@ from urllib.parse import quote
 import json
 import os
 
-api_key = os.getenv('API_KEY')
-
 
 class DemandRequest:
     def __init__(self, start_date, end_date):
@@ -16,6 +14,7 @@ class DemandRequest:
         self.end_date = end_date
 
     def make_request(self):
+        api_key = os.getenv('API_KEY')
         url = f"https://api.esios.ree.es/indicators/1293?start_date={self.start_date}T00%3A00%3A00Z&end_date={self.end_date}T23%3A50%3A00Z&geo_ids[]=8741"
         headers = {
             'x-api-key': api_key,

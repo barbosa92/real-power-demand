@@ -27,6 +27,7 @@ def fft_demand():
 
         request_handler = DemandRequest(start_date, end_date)
         response = request_handler.make_request()
+        print(response)
         signal = [item['value'] for item in response['indicator']['values']]
 
         fft_calculator = FFTCalculator(signal)
