@@ -44,7 +44,7 @@ Example response:
 
 Example request
 ```
-GET /demand/fft/2022-01-01/2022-01-31/json
+GET /demand/fft/2018-09-02/2018-10-06/json
 ```
 
 Response
